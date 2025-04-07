@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Password Strength Analyzer</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .password-container { margin: 20px 0; }
+        #password { width: 100%; padding: 10px; font-size: 16px; }
+        .strength-meter { height: 10px; background: #eee; margin-top: 10px; }
+        .strength-fill { height: 100%; width: 0%; transition: width 0.3s; }
+        .feedback { margin-top: 20px; }
+        .weak { color: red; }
+        .medium { color: orange; }
+        .strong { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Password Strength Analyzer</h1>
+    <div class="password-container">
+        <input type="password" id="password" placeholder="Enter your password" oninput="analyzePassword()">
+        <div class="strength-meter">
+            <div class="strength-fill" id="strength-fill"></div>
+        </div>
+    </div>
+    <div class="feedback" id="feedback"></div>
+
+    <script>
+        function analyzePassword() {
+            const password = document.getElementById('password').value;
+            const strengthFill = document.getElementById('strength-fill');
+            const feedback = document.getElementById('feedback');
+            
+            if (password.length === 0) {
+                strengthFill.style.width = '0%';
+                strengthFill.style.backgroundColor = '';
+                feedback.innerHTML = '';
+                return;
+            }
+            
+            // Score calculation
+            let score = 0;
+            let feedbackMessages = [];
+            
+            // Length check
+            if (password.length < 8) {
+                feedbackMessages.push("Password is too short (minimum 8 characters)");
+            } else {
+                score += Math.min(password.length * 3, 30); // Max 30 points for length
+            }
+            
+            // Character diversity
+            const hasLower = /[a-z]/.test(password);
+            const hasUpper = /[A-Z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecial = /[^a-zA-Z0-9]/.test(password);
+            
+            if (hasLower) score += 5;
+            if (hasUpper) score += 5;
+            if (hasNumber) score += 5;
+            if (hasSpecial) score += 10;
+            
+            if (!hasLower) feedbackMessages.push("Add lowercase letters");
+            if (!hasUpper) feedbackMessages.push("Add uppercase letters");
+            if (!hasNumber) feedbackMessages.push("Add numbers");
+            if (!hasSpecial) feedbackMessages.push("Add special characters");
+            
+            // Common patterns check
+            const commonPasswords = ["password", "123456", "qwerty", "letmein", "admin"];
+            if (commonPasswords.includes(password.toLowerCase())) {
+                score = 0;
+                feedbackMessages = ["This is a very common password - choose something more unique"];
+            }
+            
+            // Sequential/repeated characters
+            if (/(.)\1{2,}/.test(password)) {
+                score -= 10;
+                feedbackMessages.push("Avoid repeated characters");
+            }
+            if (/123|234|345|456|567|678|789|890/.test(password) || 
+                /abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz/.test(password)) {
+                score -= 10;
+                feedbackMessages.push("Avoid sequential characters");
+            }
+            
+            // Calculate percentage (cap at 100)
+            const percentage = Math.min(Math.max(score, 0), 100);
+            
+            // Update UI
+            strengthFill.style.width = percentage + '%';
+            
+            if (percentage < 40) {
+                strengthFill.style.backgroundColor = 'red';
+                feedback.className = 'feedback weak';
+            } else if (percentage < 70) {
+                strengthFill.style.backgroundColor = 'orange';
+                feedback.className = 'feedback medium';
+            } else {
+                strengthFill.style.backgroundColor = 'green';
+                feedback.className = 'feedback strong';
+            }
+            
+            // Show feedback
+            if (feedbackMessages.length > 0) {
+                feedback.innerHTML = '<strong>Suggestions:</strong><br>' + feedbackMessages.join('<br>');
+            } else {
+                feedback.innerHTML = 'Strong password!';
+            }
+        }
+    </script>
+</body>
+</html>
